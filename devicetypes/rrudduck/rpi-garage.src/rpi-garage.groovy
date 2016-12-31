@@ -11,8 +11,9 @@ metadata {
         capability "Contact Sensor"
         capability "Refresh"
         capability "Sensor"
+        capability "Polling"
 
-        attribute "status"
+        attribute "status", "string"
 
         command "toggle"
     }
@@ -53,17 +54,26 @@ def toggle() {
 }
 
 def poll() {
-
+	log.debug "Event: poll"
+    pollInternal(false)
 }
 
 def refresh() {
-    poll()
+	log.debug "Event: refresh"
+    pollInternal(true)
 }
 
-private String NetworkDeviceId(){
-    def ip = convertIPtoHex(settings.ip).toUpperCase()
-    def port = convertPortToHex(settings.port)
-    return "$ip:$port"
+private pollInternal(boolean isRefresh) {
+	setDeviceNetworkId()
+}
+
+private setDeviceNetworkId(){
+	log.debug "Setting device network id dynamically."
+    if (ip == null || port == null ) return
+    def ip = convertIPtoHex(ip)
+    def port = convertPortToHex(port)
+  	device.deviceNetworkId = "$ip$port"
+  	log.debug "Device Network Id set to ${ip}${port}"
 }
 
 private String convertIPtoHex(ip) {
