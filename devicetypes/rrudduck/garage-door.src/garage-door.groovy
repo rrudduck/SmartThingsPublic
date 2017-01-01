@@ -15,8 +15,6 @@ metadata {
         capability "Polling"
         capability "Refresh"
         capability "Sensor"
-
-        attribute "door", "string"
     }
 
     simulator {
@@ -57,9 +55,7 @@ def configure() {
 	
 }
 
-def parse(String description) {
-    log.debug "Parse: ${description}"
-    
+def parse(String description) {   
     if (description == 'updated') {
     	return
   	}
@@ -67,35 +63,30 @@ def parse(String description) {
   	def descMap = parseDescriptionAsMap(description)
     
   	if (descMap.containsKey("body")) {
-    	log.debug "Parse: map contains body data"
     	def body = parseBase64Json(descMap["body"])
         
     	if (body.containsKey("result")) {
-        	log.debug "Parse: body contains result"
             def result = body.result
             def resultStr = result == 0 ? "open" : "closed"
       		sendEvent(name: "door", value: resultStr)
+            sendEvent(name: "contact", value: resultStr)
     	}
   }
 }
 
 def open() {
-	log.debug "Command: open"
     request("/v1/doors/open/${doorId}", "POST")
 }
 
 def close() {
-	log.debug "Command: close"
     request("/v1/doors/close/${doorId}", "POST")
 }
 
 def poll() {
-	log.debug "Event: poll"
     pollInternal(false)
 }
 
 def refresh() {
-	log.debug "Event: refresh"
     pollInternal(true)
 }
 
@@ -105,15 +96,14 @@ private pollInternal(boolean isRefresh) {
 }
 
 private setDeviceNetworkId() {
-	log.debug "Setting device network id dynamically."
     if (ip == null || port == null ) return
     def ip = convertIPtoHex(ip)
     def port = convertPortToHex(port)
     def newId = "${ip}:${port}"
     if (device.deviceNetworkId != newId) {
   		device.deviceNetworkId = "${ip}:${port}"
+        log.debug "Device Network Id set to ${device.deviceNetworkId}"
     }
-  	log.debug "Device Network Id set to ${device.deviceNetworkId}"
 }
 
 def request(path, method, body = "") {
@@ -140,7 +130,7 @@ def parseDescriptionAsMap(String description) {
 }
 
 private String getHostAddress() {
-	return ip == null ? "10.100.3.16" : "${ip}:${port}"
+	return "${ip}:${port}"
 }
 
 private String convertIPtoHex(ip) {
