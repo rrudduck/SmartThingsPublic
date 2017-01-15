@@ -59,6 +59,10 @@ def parse(String description) {
     	if (body.containsKey("result")) {
             def result = body.result
       		sendEvent(name: "color", value: result)
+            if (body.success == true) {
+            	def state = result == "#000000" ? "off" : "on"
+                sendEvent(name: "switch", value: state)
+            }
     	}
   	}
 }
