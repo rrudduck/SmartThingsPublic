@@ -51,6 +51,15 @@ def parse(String description) {
     if (description == 'updated') {
     	return
     }
+    
+    def descMap = parseDescriptionAsMap(description)    
+  	if (descMap.containsKey("body")) {
+    	def body = parseBase64Json(descMap["body"])        
+    	if (body.containsKey("result")) {
+            def result = body.result
+      		sendEvent(name: "color", value: result)
+    	}
+  	}
 }
 
 def refresh() {
@@ -59,7 +68,18 @@ def refresh() {
 }
 
 def reset() {
+	sendEvent(name: "switch", value: "off")
 	setColor(hex: "#000000")
+}
+
+def on() {
+    sendEvent(name: "switch", value: "on")
+    setColor(hex: "#ffffff")
+}
+
+def off() { 
+	sendEvent(name: "switch", value: "off")
+    reset()
 }
 
 def setSaturation(percent) {
@@ -74,21 +94,17 @@ def setHue(value) {
 
 def setColor(value) {
 	def result = []
-	log.debug "setColor: ${value}"
+	log.debug "setColor: $value"
     def json = new JsonBuilder()
 	if (value.hex) {
-        json.call("color": value.hex)
-        def c = value.hex.findAll(/[0-9a-fA-F]{2}/).collect { Integer.parseInt(it, 16) }
-        def hsv = rgbToHSV(c[0], c[1], c[2])
-        sendEvent(name: "hue", value: hsv.hue)
-        sendEvent(name: "saturation", value: hsv.saturation)
+        json color: value.hex
 	} else {
 		def hue = value.hue ?: device.currentValue("hue")
 		def saturation = value.saturation ?: device.currentValue("saturation")
 		if(hue == null) hue = 13
 		if(saturation == null) saturation = 13
 		def rgb = huesatToRGB(hue, saturation)
-        json.call("color": "${rgb[0]},${rgb[1]},${rgb[2]}")
+        json color: "${rgb[0]},${rgb[1]},${rgb[2]}"
 	}
 
 	if(value.hue) sendEvent(name: "hue", value: value.hue)
@@ -96,7 +112,7 @@ def setColor(value) {
 	if(value.switch) sendEvent(name: "switch", value: value.switch)
 	if(value.saturation) sendEvent(name: "saturation", value: value.saturation)
 
-	request("/v1/color", "POST", json)
+	request("/v1/color", "POST", json.toString())
 }
 
 def setDeviceNetworkId() {
