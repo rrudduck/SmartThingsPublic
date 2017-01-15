@@ -9,6 +9,7 @@ metadata {
     ) {
         capability "Actuator"
         capability "Color Control"
+        capability "Light"
         capability "Refresh"
         capability "Sensor"
         capability "Switch"
